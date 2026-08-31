@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
 }
 
 async function sendWhatsAppReply(to: string, text: string) {
-  await fetch(`${GRAPH_URL}/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`, {
+  const res = await fetch(`${GRAPH_URL}/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`, {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
@@ -29,6 +29,13 @@ async function sendWhatsAppReply(to: string, text: string) {
       to,
       text: { body: text },
     }),
+  })
+  const data = await res.json()
+  if (!res.ok) {
+    console.error('Error enviando WhatsApp:', JSON.stringify(data))
+  } else {
+    console.log('WhatsApp enviado OK:', JSON.stringify(data))
+  }
 }
 
 export async function POST(req: NextRequest) {
