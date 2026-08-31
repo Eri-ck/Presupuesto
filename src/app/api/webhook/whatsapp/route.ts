@@ -29,7 +29,6 @@ async function sendWhatsAppReply(to: string, text: string) {
       to,
       text: { body: text },
     }),
-  })
 }
 
 export async function POST(req: NextRequest) {
