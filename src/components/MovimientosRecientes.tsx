@@ -56,17 +56,17 @@ export default function MovimientosRecientes() {
     loadAll()
   }
 
-  if (loading) return <div className="p-6 text-neutral-400 font-mono">Cargando movimientos…</div>
+  if (loading) return <div className="p-6 text-[var(--neu-text-dim)]">Cargando movimientos…</div>
 
   const money = (n: number) => '$' + Math.round(n).toLocaleString('es-MX')
   const fmtDate = (iso: string) => new Date(iso).toLocaleDateString('es-MX', { day: 'numeric', month: 'short' })
   const fmtTime = (iso: string) => new Date(iso).toLocaleString('es-MX', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
 
   return (
-    <div className="max-w-xl mt-6 font-mono text-neutral-100">
-      <h2 className="text-lg mb-4">Movimientos recientes</h2>
+    <div className="neu-raised max-w-xl p-6 mt-6 font-mono text-[var(--neu-text)]">
+      <h2 className="text-lg mb-4 font-semibold">Movimientos recientes</h2>
       {transactions.length === 0 && (
-        <div className="text-neutral-500 text-sm">Sin movimientos todavía en esta quincena.</div>
+        <div className="text-[var(--neu-text-dim)] text-sm">Sin movimientos todavía en esta quincena.</div>
       )}
       <div className="flex flex-col">
         {transactions.map(t => {
@@ -75,59 +75,59 @@ export default function MovimientosRecientes() {
           const profile = profiles.find(p => p.id === t.profile_id)
           const isEditing = editingId === t.id
           return (
-            <div key={t.id} className="py-3 border-b border-neutral-800">
-              <div className="flex items-center gap-3">
-                <span className="w-7 h-7 rounded-full bg-neutral-700 flex items-center justify-center text-xs shrink-0">
+            <div key={t.id} className="py-3 border-b border-[var(--neu-shadow-dark)]/30">
+              <div className="flex items-center gap-3 flex-wrap">
+                <span className="w-7 h-7 rounded-full neu-pressed flex items-center justify-center text-xs shrink-0">
                   {profile?.name?.[0] ?? '?'}
                 </span>
-                <span className="text-[10px] uppercase border border-neutral-700 rounded px-1.5 py-0.5 text-neutral-500 shrink-0">
+                <span className="text-[10px] uppercase text-[var(--neu-text-dim)] neu-pressed rounded px-1.5 py-0.5 shrink-0">
                   {t.source}
                 </span>
                 <div className="flex-1 min-w-0">
                   <div className="text-sm truncate">
-                    {t.description} <span className="text-neutral-500 text-xs">{cat?.name ?? 'Sin categoría'}</span>
+                    {t.description} <span className="text-[var(--neu-text-dim)] text-xs">{cat?.name ?? 'Sin categoría'}</span>
                   </div>
                   <div className="flex gap-1.5 mt-1 flex-wrap items-center">
-                    <span className="text-[10px] text-neutral-500">{fmtDate(t.occurred_at)}</span>
+                    <span className="text-[10px] text-[var(--neu-text-dim)]">{fmtDate(t.occurred_at)}</span>
                     {t.priority && (
-                      <span className={`text-[10px] px-1.5 py-0.5 rounded ${t.priority === 'necesidad' ? 'bg-emerald-900 text-emerald-300' : 'bg-amber-900 text-amber-300'}`}>
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${t.priority === 'necesidad' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
                         {t.priority === 'necesidad' ? 'Necesidad' : 'Prescindible'}
                       </span>
                     )}
-                    <span className="text-[10px] px-1.5 py-0.5 rounded border border-purple-700 text-purple-300">
+                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-purple-100 text-purple-700">
                       {card?.name ?? 'Efectivo'}
                     </span>
                     {t.needs_invoice && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-900 text-blue-300">Facturar</span>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700">Facturar</span>
                     )}
                     {(t.tags ?? []).map(tag => (
-                      <span key={tag} className="text-[10px] px-1.5 py-0.5 rounded border border-neutral-700 text-neutral-400">{tag}</span>
+                      <span key={tag} className="text-[10px] px-1.5 py-0.5 rounded-full neu-pressed text-[var(--neu-text-dim)]">{tag}</span>
                     ))}
                   </div>
                 </div>
                 <span className="text-sm shrink-0">{money(t.amount)}</span>
                 <button onClick={() => setEditingId(isEditing ? null : t.id)}
-                  className="text-neutral-500 hover:text-teal-400 text-xs shrink-0 border border-neutral-700 rounded px-2 py-1">
+                  className="neu-btn text-xs shrink-0 px-3 py-1">
                   {isEditing ? 'Cerrar' : 'Editar'}
                 </button>
               </div>
 
               {isEditing && (
-                <div className="mt-3 ml-10 flex flex-wrap gap-2 items-center bg-neutral-900 border border-neutral-800 rounded p-3">
+                <div className="mt-3 ml-10 flex flex-wrap gap-2 items-center neu-pressed p-3">
                   <select value={t.category_id ?? ''} onChange={e => updateCategory(t.id, e.target.value)}
-                    className="bg-neutral-800 border border-neutral-700 rounded px-2 py-1 text-xs">
+                    className="bg-transparent border-b border-[var(--neu-shadow-dark)] px-1 py-1 text-xs focus:outline-none">
                     {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                   </select>
                   <select value={t.card_id ?? 'efectivo'} onChange={e => updatePaymentMethod(t.id, e.target.value)}
-                    className="bg-neutral-800 border border-neutral-700 rounded px-2 py-1 text-xs">
+                    className="bg-transparent border-b border-[var(--neu-shadow-dark)] px-1 py-1 text-xs focus:outline-none">
                     <option value="efectivo">Efectivo / débito</option>
                     {cards.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                   </select>
-                  <label className="flex items-center gap-1 text-xs text-neutral-400">
+                  <label className="flex items-center gap-1 text-xs text-[var(--neu-text-dim)]">
                     <input type="checkbox" checked={t.needs_invoice} onChange={() => toggleInvoice(t.id, t.needs_invoice)} />
                     Necesita factura
                   </label>
-                  <span className="text-[10px] text-neutral-600">{fmtTime(t.created_at)}</span>
+                  <span className="text-[10px] text-[var(--neu-text-dim)]">{fmtTime(t.created_at)}</span>
                 </div>
               )}
             </div>

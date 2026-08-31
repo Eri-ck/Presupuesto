@@ -73,31 +73,31 @@ export default function RegistrarGasto() {
   }
 
   return (
-    <div className="max-w-xl bg-neutral-900 border border-neutral-800 rounded-xl p-6 mt-6 font-mono text-neutral-100">
-      <h2 className="text-lg mb-4">Registrar gasto</h2>
+    <div className="neu-raised max-w-xl p-6 mt-6 font-mono text-[var(--neu-text)]">
+      <h2 className="text-lg mb-4 font-semibold">Registrar gasto</h2>
 
       <div className="grid grid-cols-2 gap-3 mb-3">
         <input value={desc} onChange={e => setDesc(e.target.value)} placeholder="Descripción"
-          className="bg-neutral-800 border border-neutral-700 rounded px-2 py-1 text-sm col-span-2" />
+          className="neu-input px-3 py-2 text-sm col-span-2" />
         <input type="number" value={amount} onChange={e => setAmount(e.target.value)} placeholder="Monto"
-          className="bg-neutral-800 border border-neutral-700 rounded px-2 py-1 text-sm" />
+          className="neu-input px-3 py-2 text-sm" />
         <input type="date" value={occurredAt} onChange={e => setOccurredAt(e.target.value)}
-          className="bg-neutral-800 border border-neutral-700 rounded px-2 py-1 text-sm" />
+          className="neu-input px-3 py-2 text-sm" />
         <select value={categoryId} onChange={e => setCategoryId(e.target.value)}
-          className="bg-neutral-800 border border-neutral-700 rounded px-2 py-1 text-sm">
+          className="neu-input px-3 py-2 text-sm">
           <option value="">— categoría —</option>
           {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
         <select value={profileId} onChange={e => setProfileId(e.target.value)}
-          className="bg-neutral-800 border border-neutral-700 rounded px-2 py-1 text-sm">
+          className="neu-input px-3 py-2 text-sm">
           {profiles.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
         </select>
         <select value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)}
-          className="bg-neutral-800 border border-neutral-700 rounded px-2 py-1 text-sm">
+          className="neu-input px-3 py-2 text-sm">
           <option value="efectivo">Efectivo / débito</option>
           {cards.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
-        <label className="flex items-center gap-2 text-sm bg-neutral-800 border border-neutral-700 rounded px-2 py-1">
+        <label className="neu-pressed flex items-center gap-2 text-sm px-3 py-2">
           <input type="checkbox" checked={needsInvoice} onChange={e => setNeedsInvoice(e.target.checked)} />
           Necesita factura
         </label>
@@ -117,15 +117,15 @@ export default function RegistrarGasto() {
       <div className="flex flex-wrap gap-2 mb-4">
         {TYPE_TAGS.map(tag => (
           <button key={tag} onClick={() => toggleTag(tag)}
-            className={`text-xs px-3 py-1 rounded-full border ${selectedTags.includes(tag) ? 'bg-teal-700 border-teal-700 text-white' : 'border-neutral-700 text-neutral-400'}`}>
+            className={`text-xs px-3 py-1 rounded-full ${selectedTags.includes(tag) ? 'bg-teal-600 text-white' : 'neu-btn text-[var(--neu-text-dim)]'}`}>
             {tag}
           </button>
         ))}
       </div>
 
-      {error && <div className="text-rose-400 text-sm mb-3">{error}</div>}
+      {error && <div className="text-rose-600 text-sm mb-3">{error}</div>}
 
-      <button onClick={submit} disabled={saving} className="bg-emerald-800 text-emerald-200 px-4 py-2 rounded text-sm">
+      <button onClick={submit} disabled={saving} className="neu-btn px-4 py-2 text-sm text-emerald-700 font-medium">
         {saving ? 'Guardando…' : '+ Registrar gasto'}
       </button>
     </div>

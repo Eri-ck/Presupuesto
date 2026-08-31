@@ -53,7 +53,7 @@ export default function CategoriasHogar() {
     loadAll()
   }
 
-  if (loading) return <div className="p-6 text-neutral-400 font-mono">Cargando categorías…</div>
+  if (loading) return <div className="p-6 text-[var(--neu-text-dim)]">Cargando categorías…</div>
 
   const money = (n: number) => '$' + Math.round(n).toLocaleString('es-MX')
   const fijas = categories.filter(c => c.type === 'fijo')
@@ -66,22 +66,22 @@ export default function CategoriasHogar() {
     const over = spent > c.budget_current
     const color = over ? 'bg-rose-500' : pct > 80 ? 'bg-amber-400' : 'bg-emerald-500'
     return (
-      <div key={c.id} className={`border rounded-lg p-3 mb-2 ${over ? 'border-rose-800' : 'border-neutral-800'} bg-neutral-900`}>
+      <div key={c.id} className="neu-pressed p-4 mb-3">
         <div className="flex justify-between items-center mb-2 text-sm">
           <span>{c.name}</span>
           <div className="flex items-center gap-2">
-            <span className="text-neutral-400">
+            <span className="text-[var(--neu-text-dim)]">
               {money(spent)} / <input
                 type="number"
                 defaultValue={c.budget_current}
                 onBlur={e => updateBudget(c.id, e.target.value)}
-                className="w-16 bg-transparent border-b border-neutral-700 text-right text-neutral-200"
+                className="w-16 bg-transparent border-b border-[var(--neu-shadow-dark)] text-right text-[var(--neu-text)] focus:outline-none"
               />
             </span>
-            <button onClick={() => removeCategory(c.id)} className="text-neutral-500 hover:text-rose-400 px-1">×</button>
+            <button onClick={() => removeCategory(c.id)} className="text-[var(--neu-text-dim)] hover:text-rose-500 px-1">×</button>
           </div>
         </div>
-        <div className="h-1.5 bg-neutral-800 rounded overflow-hidden">
+        <div className="h-2 rounded-full overflow-hidden bg-[var(--neu-shadow-dark)]/30">
           <div className={`h-full ${color}`} style={{ width: `${pct}%` }} />
         </div>
       </div>
@@ -89,33 +89,33 @@ export default function CategoriasHogar() {
   }
 
   return (
-    <div className="max-w-xl bg-neutral-900 border border-neutral-800 rounded-xl p-6 mt-6 font-mono text-neutral-100">
-      <h2 className="text-lg mb-4">Categorías del hogar</h2>
+    <div className="neu-raised max-w-xl p-6 mt-6 font-mono text-[var(--neu-text)]">
+      <h2 className="text-lg mb-4 font-semibold">Categorías del hogar</h2>
 
       {overBudget.length > 0 && (
-        <div className="bg-rose-950 border border-rose-800 text-rose-200 text-sm rounded-lg p-3 mb-4">
+        <div className="neu-pressed text-rose-600 text-sm p-3 mb-4">
           En sobregiro: {overBudget.map(c => c.name).join(', ')}
         </div>
       )}
 
-      <div className="text-xs uppercase text-neutral-500 mb-2">Gastos fijos</div>
+      <div className="text-xs uppercase text-[var(--neu-text-dim)] mb-2 tracking-wide">Gastos fijos</div>
       {fijas.map(renderRow)}
       <div className="flex gap-2 mb-6">
         <input value={newType === 'fijo' ? newName : ''} onChange={e => { setNewType('fijo'); setNewName(e.target.value) }}
-          placeholder="Nueva categoría fija" className="flex-1 bg-neutral-800 border border-neutral-700 rounded px-2 py-1 text-sm" />
+          placeholder="Nueva categoría fija" className="neu-input flex-1 px-3 py-2 text-sm" />
         <input type="number" value={newType === 'fijo' ? newBudget : ''} onChange={e => { setNewType('fijo'); setNewBudget(e.target.value) }}
-          placeholder="Presupuesto" className="w-28 bg-neutral-800 border border-neutral-700 rounded px-2 py-1 text-sm" />
-        <button onClick={() => { setNewType('fijo'); addCategory() }} className="bg-emerald-800 text-emerald-200 px-3 py-1 rounded text-sm">+</button>
+          placeholder="Presupuesto" className="neu-input w-28 px-3 py-2 text-sm" />
+        <button onClick={() => { setNewType('fijo'); addCategory() }} className="neu-btn px-4 py-2 text-sm text-emerald-700">+</button>
       </div>
 
-      <div className="text-xs uppercase text-neutral-500 mb-2">Gastos variables</div>
+      <div className="text-xs uppercase text-[var(--neu-text-dim)] mb-2 tracking-wide">Gastos variables</div>
       {variables.map(renderRow)}
       <div className="flex gap-2">
         <input value={newType === 'variable' ? newName : ''} onChange={e => { setNewType('variable'); setNewName(e.target.value) }}
-          placeholder="Nueva categoría variable" className="flex-1 bg-neutral-800 border border-neutral-700 rounded px-2 py-1 text-sm" />
+          placeholder="Nueva categoría variable" className="neu-input flex-1 px-3 py-2 text-sm" />
         <input type="number" value={newType === 'variable' ? newBudget : ''} onChange={e => { setNewType('variable'); setNewBudget(e.target.value) }}
-          placeholder="Presupuesto" className="w-28 bg-neutral-800 border border-neutral-700 rounded px-2 py-1 text-sm" />
-        <button onClick={() => { setNewType('variable'); addCategory() }} className="bg-emerald-800 text-emerald-200 px-3 py-1 rounded text-sm">+</button>
+          placeholder="Presupuesto" className="neu-input w-28 px-3 py-2 text-sm" />
+        <button onClick={() => { setNewType('variable'); addCategory() }} className="neu-btn px-4 py-2 text-sm text-emerald-700">+</button>
       </div>
     </div>
   )

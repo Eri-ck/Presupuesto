@@ -7,13 +7,15 @@ import MovimientosRecientes from '@/components/MovimientosRecientes'
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-neutral-950 p-8">
-      <IngresoHogar />
-      <CategoriasHogar />
-      <TarjetasCredito />
-      <MetasAhorro />
-      <RegistrarGasto />
-      <MovimientosRecientes />
+    <div className="min-h-screen flex flex-col items-center px-4 py-6 sm:px-8 sm:py-10">
+      <div className="w-full max-w-xl">
+        <IngresoHogar />
+        <CategoriasHogar />
+        <TarjetasCredito />
+        <MetasAhorro />
+        <RegistrarGasto />
+        <MovimientosRecientes />
+      </div>
     </div>
   )
 }

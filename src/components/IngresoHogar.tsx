@@ -88,12 +88,12 @@ export default function IngresoHogar() {
     loadAll()
   }
 
-  if (loading) return <div className="p-6 text-neutral-400">Cargando…</div>
+  if (loading) return <div className="p-6 text-[var(--neu-text-dim)]">Cargando…</div>
 
   if (!mama || !papa) {
     return (
-      <div className="p-6 text-amber-400">
-        Falta crear los perfiles de mamá y papá en la tabla profiles. Corre el insert de Supabase antes de seguir.
+      <div className="neu-pressed p-6 text-amber-600">
+        Falta crear los perfiles de mamá y papá en la tabla profiles.
       </div>
     )
   }
@@ -109,14 +109,14 @@ export default function IngresoHogar() {
   const money = (n: number) => '$' + Math.round(n).toLocaleString('es-MX')
 
   return (
-    <div className="text-neutral-100 font-mono">
-      <h1 className="text-2xl mb-6">{formatQuincenaLabel(idx)}</h1>
+    <div className="text-[var(--neu-text)] font-mono">
+      <h1 className="text-2xl mb-6 font-semibold">{formatQuincenaLabel(idx)}</h1>
 
-      <div className="max-w-xl bg-neutral-900 border border-neutral-800 rounded-xl p-6">
-        <div className="text-xs uppercase text-neutral-500 mb-2">Mamá · semanas de esta quincena</div>
+      <div className="neu-raised max-w-xl p-6">
+        <div className="text-xs uppercase text-[var(--neu-text-dim)] mb-3 tracking-wide">Mamá · semanas de esta quincena</div>
         {mamaWeeks.map(w => (
-          <div key={w.id} className="flex justify-between py-1 text-sm">
-            <span>{w.period_start}</span>
+          <div key={w.id} className="flex justify-between py-1.5 text-sm">
+            <span className="text-[var(--neu-text-dim)]">{w.period_start}</span>
             <span>{money(w.amount)}</span>
           </div>
         ))}
@@ -126,41 +126,41 @@ export default function IngresoHogar() {
             value={newAmount}
             onChange={e => setNewAmount(e.target.value)}
             placeholder="Monto de la semana"
-            className="bg-neutral-800 border border-neutral-700 rounded px-2 py-1 text-sm flex-1"
+            className="neu-input px-3 py-2 text-sm flex-1"
           />
-          <button onClick={addMamaWeek} className="bg-emerald-800 text-emerald-200 px-3 py-1 rounded text-sm">
-            + Agregar semana
+          <button onClick={addMamaWeek} className="neu-btn px-4 py-2 text-sm font-medium text-emerald-700">
+            + Agregar
           </button>
         </div>
-        <div className="flex justify-between mt-3 pt-3 border-t border-neutral-800 text-sm">
+        <div className="flex justify-between mt-4 pt-3 border-t border-[var(--neu-shadow-dark)]/40 text-sm font-medium">
           <span>Subtotal mamá</span>
           <span>{money(mamaTotal)}</span>
         </div>
 
-        <div className="text-xs uppercase text-neutral-500 mt-6 mb-2">Papá · depósito de esta quincena</div>
+        <div className="text-xs uppercase text-[var(--neu-text-dim)] mt-6 mb-3 tracking-wide">Papá · depósito de esta quincena</div>
         <div className="flex gap-2">
           <input
             type="number"
             value={papaAmount}
             onChange={e => setPapaAmount(e.target.value)}
             placeholder="Depósito"
-            className="bg-neutral-800 border border-neutral-700 rounded px-2 py-1 text-sm flex-1"
+            className="neu-input px-3 py-2 text-sm flex-1"
           />
-          <button onClick={savePapaDeposit} className="bg-neutral-800 px-3 py-1 rounded text-sm">
+          <button onClick={savePapaDeposit} className="neu-btn px-4 py-2 text-sm font-medium">
             Guardar
           </button>
         </div>
 
-        <div className="flex justify-between mt-6 pt-4 border-t border-neutral-700 text-base font-bold">
+        <div className="flex justify-between mt-6 pt-4 border-t border-[var(--neu-shadow-dark)]/40 text-base font-semibold">
           <span>Total ingreso quincenal</span>
           <span>{money(total)}</span>
         </div>
 
-        <div className="mt-4 space-y-1 text-sm">
-          <div className="flex justify-between text-rose-300"><span>Personal ({ALLOCATION.personal}%)</span><span>- {money(personalAmt)}</span></div>
-          <div className="flex justify-between text-emerald-300"><span>Ahorro general ({ALLOCATION.ahorroGeneral}%)</span><span>- {money(ahorroGeneralAmt)}</span></div>
-          <div className="flex justify-between text-amber-300"><span>Ahorro navideño ({ALLOCATION.ahorroNavidad}%)</span><span>- {money(ahorroNavidadAmt)}</span></div>
-          <div className="flex justify-between pt-2 border-t border-neutral-800 font-semibold"><span>= Disponible para el hogar</span><span>{money(hogarPool)}</span></div>
+        <div className="mt-4 space-y-1.5 text-sm">
+          <div className="flex justify-between text-rose-600"><span>Personal ({ALLOCATION.personal}%)</span><span>- {money(personalAmt)}</span></div>
+          <div className="flex justify-between text-emerald-700"><span>Ahorro general ({ALLOCATION.ahorroGeneral}%)</span><span>- {money(ahorroGeneralAmt)}</span></div>
+          <div className="flex justify-between text-amber-700"><span>Ahorro navideño ({ALLOCATION.ahorroNavidad}%)</span><span>- {money(ahorroNavidadAmt)}</span></div>
+          <div className="flex justify-between pt-2 border-t border-[var(--neu-shadow-dark)]/40 font-semibold"><span>= Disponible para el hogar</span><span>{money(hogarPool)}</span></div>
         </div>
       </div>
     </div>
