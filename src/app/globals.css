@@ -1,0 +1,88 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+:root {
+  --neu-bg: #e6e7ee;
+  --neu-shadow-light: #ffffff;
+  --neu-shadow-dark: #b8b9c3;
+  --neu-text: #4a4a55;
+  --neu-text-dim: #8b8c99;
+  --neu-accent: #6c7a89;
+}
+
+body {
+  background: var(--neu-bg);
+  color: var(--neu-text);
+}
+
+.neu-raised {
+  background: var(--neu-bg);
+  border-radius: 1.5rem;
+  box-shadow: 8px 8px 16px var(--neu-shadow-dark), -8px -8px 16px var(--neu-shadow-light);
+}
+
+.neu-pressed {
+  background: var(--neu-bg);
+  border-radius: 1rem;
+  box-shadow: inset 4px 4px 8px var(--neu-shadow-dark), inset -4px -4px 8px var(--neu-shadow-light);
+}
+
+.neu-btn {
+  background: var(--neu-bg);
+  border-radius: 999px;
+  box-shadow: 4px 4px 8px var(--neu-shadow-dark), -4px -4px 8px var(--neu-shadow-light);
+  transition: box-shadow 0.15s ease;
+}
+.neu-btn:active {
+  box-shadow: inset 3px 3px 6px var(--neu-shadow-dark), inset -3px -3px 6px var(--neu-shadow-light);
+}
+
+.neu-input {
+  background: var(--neu-bg);
+  border-radius: 0.75rem;
+  box-shadow: inset 3px 3px 6px var(--neu-shadow-dark), inset -3px -3px 6px var(--neu-shadow-light);
+  border: none;
+  outline: none;
+  color: var(--neu-text);
+}
+.neu-input::placeholder { color: var(--neu-text-dim); }
+
+
+.neu-btn-primary {
+  background: #4FAE7C;
+  color: white;
+  border-radius: 999px;
+  box-shadow: 4px 4px 8px var(--neu-shadow-dark), -4px -4px 8px var(--neu-shadow-light);
+}
+.neu-btn-primary:active { box-shadow: inset 2px 2px 4px rgba(0,0,0,0.3); }
+
+.neu-btn-danger {
+  background: #e24b4a;
+  color: white;
+  border-radius: 999px;
+  box-shadow: 4px 4px 8px var(--neu-shadow-dark), -4px -4px 8px var(--neu-shadow-light);
+}
+.neu-btn-danger:active { box-shadow: inset 2px 2px 4px rgba(0,0,0,0.3); }
