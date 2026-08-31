@@ -149,7 +149,9 @@ export default function IngresoHogar() {
     loadAll()
   }
 
-  if (loading) return <div className="p-6 text-[var(--neu-text-dim)]">Cargando…</div>
+  if (loading) {
+    return <div className="p-6 text-[var(--neu-text-dim)]">Cargando…</div>
+  }
 
   if (!mama || !papa) {
     return (
@@ -162,6 +164,9 @@ export default function IngresoHogar() {
   const mamaTotal = mamaWeeks.reduce((s, w) => s + Number(w.amount), 0)
   const papaTotal = papaEntry ? Number(papaEntry.amount) : 0
   const total = mamaTotal + papaTotal
+  const mamaShare = total > 0 ? mamaTotal / total : 0
+  const papaShare = total > 0 ? papaTotal / total : 0
+
   const personalAmt = total * (allocation.personal_pct / 100)
   const ahorroGeneralAmt = total * (allocation.ahorro_general_pct / 100)
   const ahorroNavidadAmt = total * (allocation.ahorro_navidad_pct / 100)
@@ -170,8 +175,10 @@ export default function IngresoHogar() {
   const money = (n: number) => '$' + Math.round(n).toLocaleString('es-MX')
 
   function sliderRow(label: string, key: keyof typeof allocation, amount: number, color: string) {
+    const mamaPart = amount * mamaShare
+    const papaPart = amount * papaShare
     return (
-      <div className="mb-3">
+      <div className="mb-4">
         <div className="flex justify-between text-sm mb-1" style={{ color }}>
           <span>{label} ({allocation[key].toFixed(1)}%)</span>
           <span>- {money(amount)}</span>
@@ -183,6 +190,10 @@ export default function IngresoHogar() {
           onChange={e => commitAllocation(key, Number(e.target.value))}
           className="w-full"
         />
+        <div className="flex justify-between text-xs text-[var(--neu-text-dim)] mt-1">
+          <span>Mamá: {money(mamaPart)}</span>
+          <span>Papá: {money(papaPart)}</span>
+        </div>
       </div>
     )
   }
@@ -193,7 +204,7 @@ export default function IngresoHogar() {
 
       {isFuture && (
         <div className="neu-pressed text-amber-700 text-sm p-3 mb-4">
-          Quincena futura — lo que captures aquí es una proyección.
+          Quincena futura, lo que captures aquí es una proyección.
         </div>
       )}
       {isPast && (
@@ -202,7 +213,7 @@ export default function IngresoHogar() {
         </div>
       )}
 
-      <div className="text-xs uppercase text-[var(--neu-text-dim)] mb-3 tracking-wide">Mamá · semanas de esta quincena</div>
+      <div className="text-xs uppercase text-[var(--neu-text-dim)] mb-3 tracking-wide">Mamá, semanas de esta quincena</div>
       {mamaWeeks.map(w => (
         <div key={w.id} className="flex items-center justify-between py-1.5 text-sm gap-2">
           <span className="text-[var(--neu-text-dim)]">{w.period_start}</span>
@@ -223,7 +234,7 @@ export default function IngresoHogar() {
         <span>Subtotal mamá</span><span>{money(mamaTotal)}</span>
       </div>
 
-      <div className="text-xs uppercase text-[var(--neu-text-dim)] mt-6 mb-3 tracking-wide">Papá · depósito de esta quincena</div>
+      <div className="text-xs uppercase text-[var(--neu-text-dim)] mt-6 mb-3 tracking-wide">Papá, depósito de esta quincena</div>
       <div className="flex gap-2">
         <input type="number" value={papaAmount} onChange={e => setPapaAmount(e.target.value)} placeholder="Depósito"
           className="neu-input px-3 py-2 text-sm flex-1" />
@@ -244,4 +255,5 @@ export default function IngresoHogar() {
       </div>
     </div>
   )
+}
 }
