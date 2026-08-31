@@ -6,7 +6,7 @@ import { useQuincena } from '@/lib/QuincenaContext'
 import { quincenaFromIndex, toISODateString, mostRecentSaturday } from '@/lib/quincena'
 import type { Profile, IncomeEntry } from '@/lib/types'
 
-const ALLOCATION = { personal: 8.4, ahorroGeneral: 15, ahorroNavidad: 5 }
+const DEFAULT_ALLOCATION = { personal_pct: 8.4, ahorro_general_pct: 15, ahorro_navidad_pct: 5 }
 
 export default function IngresoHogar() {
   const supabase = createClient()
@@ -18,6 +18,8 @@ export default function IngresoHogar() {
   const [papaEntry, setPapaEntry] = useState<IncomeEntry | null>(null)
   const [newAmount, setNewAmount] = useState('')
   const [papaAmount, setPapaAmount] = useState('')
+  const [allocation, setAllocation] = useState(DEFAULT_ALLOCATION)
+  const [allocationId, setAllocationId] = useState<string | null>(null)
 
   const { start } = quincenaFromIndex(viewedIndex)
   const quincenaStart = toISODateString(start)
@@ -52,10 +54,55 @@ export default function IngresoHogar() {
       setPapaEntry(entries?.[0] ?? null)
       setPapaAmount(entries?.[0]?.amount?.toString() ?? '')
     }
+
+    const { data: allocData } = await supabase
+      .from('allocation_settings')
+      .select('*')
+      .eq('quincena_start', quincenaStart)
+      .limit(1)
+    if (allocData?.[0]) {
+      setAllocation({
+        personal_pct: Number(allocData[0].personal_pct),
+        ahorro_general_pct: Number(allocData[0].ahorro_general_pct),
+        ahorro_navidad_pct: Number(allocData[0].ahorro_navidad_pct),
+      })
+      setAllocationId(allocData[0].id)
+    } else {
+      setAllocation(DEFAULT_ALLOCATION)
+      setAllocationId(null)
+    }
     setLoading(false)
   }
 
   useEffect(() => { loadAll() }, [viewedIndex])
+
+  async function saveAllocation(next: typeof allocation) {
+    if (allocationId) {
+      await supabase.from('allocation_settings').update({
+        personal_pct: next.personal_pct,
+        ahorro_general_pct: next.ahorro_general_pct,
+        ahorro_navidad_pct: next.ahorro_navidad_pct,
+      }).eq('id', allocationId)
+    } else {
+      const { data } = await supabase.from('allocation_settings').insert({
+        quincena_start: quincenaStart,
+        personal_pct: next.personal_pct,
+        ahorro_general_pct: next.ahorro_general_pct,
+        ahorro_navidad_pct: next.ahorro_navidad_pct,
+      }).select().single()
+      if (data) setAllocationId(data.id)
+    }
+  }
+
+  function updateAllocationLive(key: keyof typeof allocation, value: number) {
+    setAllocation(prev => ({ ...prev, [key]: value }))
+  }
+
+  function commitAllocation(key: keyof typeof allocation, value: number) {
+    const next = { ...allocation, [key]: value }
+    setAllocation(next)
+    saveAllocation(next)
+  }
 
   async function addMamaWeek() {
     if (!mama) return
@@ -115,25 +162,43 @@ export default function IngresoHogar() {
   const mamaTotal = mamaWeeks.reduce((s, w) => s + Number(w.amount), 0)
   const papaTotal = papaEntry ? Number(papaEntry.amount) : 0
   const total = mamaTotal + papaTotal
-  const personalAmt = total * (ALLOCATION.personal / 100)
-  const ahorroGeneralAmt = total * (ALLOCATION.ahorroGeneral / 100)
-  const ahorroNavidadAmt = total * (ALLOCATION.ahorroNavidad / 100)
+  const personalAmt = total * (allocation.personal_pct / 100)
+  const ahorroGeneralAmt = total * (allocation.ahorro_general_pct / 100)
+  const ahorroNavidadAmt = total * (allocation.ahorro_navidad_pct / 100)
   const hogarPool = total - personalAmt - ahorroGeneralAmt - ahorroNavidadAmt
 
   const money = (n: number) => '$' + Math.round(n).toLocaleString('es-MX')
 
+  function sliderRow(label: string, key: keyof typeof allocation, amount: number, color: string) {
+    return (
+      <div className="mb-3">
+        <div className="flex justify-between text-sm mb-1" style={{ color }}>
+          <span>{label} ({allocation[key].toFixed(1)}%)</span>
+          <span>- {money(amount)}</span>
+        </div>
+        <input
+          type="range" min={0} max={40} step={0.5}
+          value={allocation[key]}
+          onInput={e => updateAllocationLive(key, Number((e.target as HTMLInputElement).value))}
+          onChange={e => commitAllocation(key, Number(e.target.value))}
+          className="w-full"
+        />
+      </div>
+    )
+  }
+
   return (
-    <div className="neu-raised max-w-xl p-6 font-mono text-[var(--neu-text)]" style={{ borderLeft: '4px solid #d85a30' }}>
+    <div className="neu-raised max-w-xl p-6 font-mono text-[var(--neu-text)]">
       <h2 className="text-lg font-semibold mb-4" style={{ color: '#d85a30' }}>Ingreso del hogar</h2>
 
       {isFuture && (
         <div className="neu-pressed text-amber-700 text-sm p-3 mb-4">
-          Quincena futura — lo que captures aquí es una proyección, no un depósito real todavía.
+          Quincena futura — lo que captures aquí es una proyección.
         </div>
       )}
       {isPast && (
         <div className="neu-pressed text-[var(--neu-text-dim)] text-sm p-3 mb-4">
-          Estás viendo historial — estos montos ya pasaron.
+          Estás viendo historial.
         </div>
       )}
 
@@ -142,57 +207,40 @@ export default function IngresoHogar() {
         <div key={w.id} className="flex items-center justify-between py-1.5 text-sm gap-2">
           <span className="text-[var(--neu-text-dim)]">{w.period_start}</span>
           <div className="flex items-center gap-2">
-            <input
-              type="number"
-              defaultValue={w.amount}
-              onBlur={e => updateMamaWeek(w.id, e.target.value)}
-              className="w-24 bg-transparent border-b border-[var(--neu-shadow-dark)] text-right focus:outline-none"
-            />
+            <input type="number" defaultValue={w.amount} onBlur={e => updateMamaWeek(w.id, e.target.value)}
+              className="w-24 bg-transparent border-b border-[var(--neu-shadow-dark)] text-right focus:outline-none" />
             <button onClick={() => removeMamaWeek(w.id)} className="neu-btn-danger text-xs px-2 py-1">×</button>
           </div>
         </div>
       ))}
       <div className="flex gap-2 mt-3">
-        <input
-          type="number"
-          value={newAmount}
-          onChange={e => setNewAmount(e.target.value)}
+        <input type="number" value={newAmount} onChange={e => setNewAmount(e.target.value)}
           placeholder={isFuture ? 'Monto proyectado' : 'Monto de la semana nueva'}
-          className="neu-input px-3 py-2 text-sm flex-1"
-        />
-        <button onClick={addMamaWeek} className="neu-btn-primary px-4 py-2 text-sm font-medium">
-          + Agregar
-        </button>
+          className="neu-input px-3 py-2 text-sm flex-1" />
+        <button onClick={addMamaWeek} className="neu-btn-primary px-4 py-2 text-sm font-medium">+ Agregar</button>
       </div>
       <div className="flex justify-between mt-4 pt-3 border-t border-[var(--neu-shadow-dark)]/40 text-sm font-medium">
-        <span>Subtotal mamá</span>
-        <span>{money(mamaTotal)}</span>
+        <span>Subtotal mamá</span><span>{money(mamaTotal)}</span>
       </div>
 
-      <div className="text-xs uppercase text-[var(--neu-text-dim)] mt-6 mb-3 tracking-wide">Papá · depósito de esta quincena{isFuture ? ' (proyección)' : ''}</div>
+      <div className="text-xs uppercase text-[var(--neu-text-dim)] mt-6 mb-3 tracking-wide">Papá · depósito de esta quincena</div>
       <div className="flex gap-2">
-        <input
-          type="number"
-          value={papaAmount}
-          onChange={e => setPapaAmount(e.target.value)}
-          placeholder="Depósito"
-          className="neu-input px-3 py-2 text-sm flex-1"
-        />
-        <button onClick={savePapaDeposit} className="neu-btn-primary px-4 py-2 text-sm font-medium">
-          Guardar
-        </button>
+        <input type="number" value={papaAmount} onChange={e => setPapaAmount(e.target.value)} placeholder="Depósito"
+          className="neu-input px-3 py-2 text-sm flex-1" />
+        <button onClick={savePapaDeposit} className="neu-btn-primary px-4 py-2 text-sm font-medium">Guardar</button>
       </div>
 
       <div className="flex justify-between mt-6 pt-4 border-t border-[var(--neu-shadow-dark)]/40 text-base font-semibold">
-        <span>Total ingreso quincenal</span>
-        <span>{money(total)}</span>
+        <span>Total ingreso quincenal</span><span>{money(total)}</span>
       </div>
 
-      <div className="mt-4 space-y-1.5 text-sm">
-        <div className="flex justify-between text-rose-600"><span>Personal ({ALLOCATION.personal}%)</span><span>- {money(personalAmt)}</span></div>
-        <div className="flex justify-between text-emerald-700"><span>Ahorro general ({ALLOCATION.ahorroGeneral}%)</span><span>- {money(ahorroGeneralAmt)}</span></div>
-        <div className="flex justify-between text-amber-700"><span>Ahorro navideño ({ALLOCATION.ahorroNavidad}%)</span><span>- {money(ahorroNavidadAmt)}</span></div>
-        <div className="flex justify-between pt-2 border-t border-[var(--neu-shadow-dark)]/40 font-semibold"><span>= Disponible para el hogar</span><span>{money(hogarPool)}</span></div>
+      <div className="mt-4">
+        {sliderRow('Personal', 'personal_pct', personalAmt, '#e24b4a')}
+        {sliderRow('Ahorro general', 'ahorro_general_pct', ahorroGeneralAmt, '#3b6d11')}
+        {sliderRow('Ahorro navideño', 'ahorro_navidad_pct', ahorroNavidadAmt, '#854f0b')}
+        <div className="flex justify-between pt-3 border-t border-[var(--neu-shadow-dark)]/40 font-semibold text-sm">
+          <span>= Disponible para el hogar</span><span>{money(hogarPool)}</span>
+        </div>
       </div>
     </div>
   )

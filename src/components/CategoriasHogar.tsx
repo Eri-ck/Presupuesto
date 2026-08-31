@@ -14,7 +14,8 @@ export default function CategoriasHogar() {
   const [loading, setLoading] = useState(true)
   const [newName, setNewName] = useState('')
   const [newBudget, setNewBudget] = useState('')
-  const [newType, setNewType] = useState<'fijo' | 'variable'>('fijo')
+  const [showAddFijo, setShowAddFijo] = useState(false)
+  const [showAddVariable, setShowAddVariable] = useState(false)
 
   const { start } = quincenaFromIndex(viewedIndex)
   const quincenaStart = toISODateString(start)
@@ -34,12 +35,12 @@ export default function CategoriasHogar() {
     return transactions.filter(t => t.category_id === catId).reduce((s, t) => s + Number(t.amount), 0)
   }
 
-  async function addCategory() {
+  async function addCategory(type: 'fijo' | 'variable') {
     const budget = Number(newBudget) || 0
     if (!newName.trim()) return
-    await supabase.from('categories').insert({ name: newName.trim(), type: newType, budget_current: budget })
-    setNewName('')
-    setNewBudget('')
+    await supabase.from('categories').insert({ name: newName.trim(), type, budget_current: budget })
+    setNewName(''); setNewBudget('')
+    setShowAddFijo(false); setShowAddVariable(false)
     loadAll()
   }
 
@@ -72,12 +73,9 @@ export default function CategoriasHogar() {
           <span>{c.name}</span>
           <div className="flex items-center gap-2">
             <span className="text-[var(--neu-text-dim)]">
-              {money(spent)} / <input
-                type="number"
-                defaultValue={c.budget_current}
+              {money(spent)} / <input type="number" defaultValue={c.budget_current}
                 onBlur={e => updateBudget(c.id, e.target.value)}
-                className="w-16 bg-transparent border-b border-[var(--neu-shadow-dark)] text-right text-[var(--neu-text)] focus:outline-none"
-              />
+                className="w-16 bg-transparent border-b border-[var(--neu-shadow-dark)] text-right text-[var(--neu-text)] focus:outline-none" />
             </span>
             <button onClick={() => removeCategory(c.id)} className="neu-btn-danger text-xs px-2 py-1">×</button>
           </div>
@@ -90,7 +88,7 @@ export default function CategoriasHogar() {
   }
 
   return (
-    <div className="neu-raised max-w-xl p-6 mt-6 font-mono text-[var(--neu-text)]" style={{ borderLeft: '4px solid #0f6e56' }}>
+    <div className="neu-raised max-w-xl p-6 mt-6 font-mono text-[var(--neu-text)]">
       <h2 className="text-lg font-semibold mb-4" style={{ color: '#0f6e56' }}>Categorías del hogar</h2>
 
       {overBudget.length > 0 && (
@@ -99,25 +97,31 @@ export default function CategoriasHogar() {
         </div>
       )}
 
-      <div className="text-xs uppercase text-[var(--neu-text-dim)] mb-2 tracking-wide">Gastos fijos</div>
+      <div className="flex justify-between items-center mb-2">
+        <span className="text-xs uppercase text-[var(--neu-text-dim)] tracking-wide">Gastos fijos</span>
+        <button onClick={() => setShowAddFijo(v => !v)} className="neu-btn-primary w-6 h-6 flex items-center justify-center text-sm">+</button>
+      </div>
       {fijas.map(renderRow)}
-      <div className="flex gap-2 mb-6">
-        <input value={newType === 'fijo' ? newName : ''} onChange={e => { setNewType('fijo'); setNewName(e.target.value) }}
-          placeholder="Nueva categoría fija" className="neu-input flex-1 px-3 py-2 text-sm" />
-        <input type="number" value={newType === 'fijo' ? newBudget : ''} onChange={e => { setNewType('fijo'); setNewBudget(e.target.value) }}
-          placeholder="Presupuesto" className="neu-input w-28 px-3 py-2 text-sm" />
-        <button onClick={() => { setNewType('fijo'); addCategory() }} className="neu-btn-primary px-4 py-2 text-sm">+</button>
-      </div>
+      {showAddFijo && (
+        <div className="flex gap-2 mb-6">
+          <input value={newName} onChange={e => setNewName(e.target.value)} placeholder="Nombre" className="neu-input flex-1 px-3 py-2 text-sm" />
+          <input type="number" value={newBudget} onChange={e => setNewBudget(e.target.value)} placeholder="Presupuesto" className="neu-input w-28 px-3 py-2 text-sm" />
+          <button onClick={() => addCategory('fijo')} className="neu-btn-primary px-4 py-2 text-sm">Agregar</button>
+        </div>
+      )}
 
-      <div className="text-xs uppercase text-[var(--neu-text-dim)] mb-2 tracking-wide">Gastos variables</div>
-      {variables.map(renderRow)}
-      <div className="flex gap-2">
-        <input value={newType === 'variable' ? newName : ''} onChange={e => { setNewType('variable'); setNewName(e.target.value) }}
-          placeholder="Nueva categoría variable" className="neu-input flex-1 px-3 py-2 text-sm" />
-        <input type="number" value={newType === 'variable' ? newBudget : ''} onChange={e => { setNewType('variable'); setNewBudget(e.target.value) }}
-          placeholder="Presupuesto" className="neu-input w-28 px-3 py-2 text-sm" />
-        <button onClick={() => { setNewType('variable'); addCategory() }} className="neu-btn-primary px-4 py-2 text-sm">+</button>
+      <div className="flex justify-between items-center mb-2 mt-4">
+        <span className="text-xs uppercase text-[var(--neu-text-dim)] tracking-wide">Gastos variables</span>
+        <button onClick={() => setShowAddVariable(v => !v)} className="neu-btn-primary w-6 h-6 flex items-center justify-center text-sm">+</button>
       </div>
+      {variables.map(renderRow)}
+      {showAddVariable && (
+        <div className="flex gap-2">
+          <input value={newName} onChange={e => setNewName(e.target.value)} placeholder="Nombre" className="neu-input flex-1 px-3 py-2 text-sm" />
+          <input type="number" value={newBudget} onChange={e => setNewBudget(e.target.value)} placeholder="Presupuesto" className="neu-input w-28 px-3 py-2 text-sm" />
+          <button onClick={() => addCategory('variable')} className="neu-btn-primary px-4 py-2 text-sm">Agregar</button>
+        </div>
+      )}
     </div>
   )
 }
