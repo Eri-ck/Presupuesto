@@ -37,7 +37,6 @@ async function sendWhatsAppReply(to: string, text: string) {
     console.log('WhatsApp enviado OK:', JSON.stringify(data))
   }
 }
-
 export async function POST(req: NextRequest) {
   const body = await req.json()
   const supabase = createServerClient()
@@ -46,7 +45,10 @@ export async function POST(req: NextRequest) {
   const message = entry?.messages?.[0]
   if (!message) return NextResponse.json({ ok: true })
 
-  const from = message.from
+    const rawFrom = message.from
+  const from = rawFrom.startsWith('521') && rawFrom.length === 13
+    ? '52' + rawFrom.slice(3)
+    : rawFrom
   let parsed: any = null
 
   try {
