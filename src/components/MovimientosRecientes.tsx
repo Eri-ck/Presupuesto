@@ -71,6 +71,12 @@ export default function MovimientosRecientes() {
     loadAll()
   }
 
+  async function removeTransaction(id: string) {
+    await supabase.from('transactions').delete().eq('id', id)
+    setEditingId(null)
+    loadAll()
+  }
+
   function toggleTag(tag: string) {
     setSelectedTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag])
   }
@@ -263,6 +269,9 @@ export default function MovimientosRecientes() {
                     Necesita factura
                   </label>
                   <span className="text-[10px] text-[var(--neu-text-dim)]">{fmtTime(t.created_at)}</span>
+                  <button onClick={() => removeTransaction(t.id)} className="neu-btn-danger text-xs px-3 py-1 ml-auto">
+                    🗑 Borrar
+                  </button>
                 </div>
               )}
             </div>
