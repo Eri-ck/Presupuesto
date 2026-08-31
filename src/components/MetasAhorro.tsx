@@ -44,6 +44,12 @@ export default function MetasAhorro() {
     loadAll()
   }
 
+  async function removeGoal(id: string) {
+    await supabase.from('goal_contributions').delete().eq('goal_id', id)
+    await supabase.from('goals').delete().eq('id', id)
+    loadAll()
+  }
+
   if (loading) return <div className="p-6 text-neutral-400 font-mono">Cargando metas…</div>
 
   const money = (n: number) => '$' + Math.round(n).toLocaleString('es-MX')
@@ -58,7 +64,9 @@ export default function MetasAhorro() {
           const pct = g.target_amount > 0 ? Math.min(1, current / g.target_amount) : 0
           const offset = circumference * (1 - pct)
           return (
-            <div key={g.id} className="bg-neutral-900 border border-neutral-800 rounded-xl p-5">
+            <div key={g.id} className="bg-neutral-900 border border-neutral-800 rounded-xl p-5 relative">
+              <button onClick={() => removeGoal(g.id)}
+                className="absolute top-3 right-3 text-neutral-500 hover:text-rose-400 text-sm">×</button>
               <div className="text-sm mb-1">{g.name}</div>
               {g.sub && <div className="text-xs text-neutral-500 mb-3">{g.sub}</div>}
               <div className="flex items-center gap-4">
