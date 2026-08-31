@@ -70,6 +70,17 @@ export default function IngresoHogar() {
     loadAll()
   }
 
+  async function updateMamaWeek(id: string, value: string) {
+    const amount = Math.max(0, Number(value) || 0)
+    await supabase.from('income_entries').update({ amount }).eq('id', id)
+    loadAll()
+  }
+
+  async function removeMamaWeek(id: string) {
+    await supabase.from('income_entries').delete().eq('id', id)
+    loadAll()
+  }
+
   async function savePapaDeposit() {
     if (!papa) return
     const amount = Number(papaAmount)
@@ -115,9 +126,17 @@ export default function IngresoHogar() {
       <div className="neu-raised max-w-xl p-6">
         <div className="text-xs uppercase text-[var(--neu-text-dim)] mb-3 tracking-wide">Mamá · semanas de esta quincena</div>
         {mamaWeeks.map(w => (
-          <div key={w.id} className="flex justify-between py-1.5 text-sm">
+          <div key={w.id} className="flex items-center justify-between py-1.5 text-sm gap-2">
             <span className="text-[var(--neu-text-dim)]">{w.period_start}</span>
-            <span>{money(w.amount)}</span>
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                defaultValue={w.amount}
+                onBlur={e => updateMamaWeek(w.id, e.target.value)}
+                className="w-24 bg-transparent border-b border-[var(--neu-shadow-dark)] text-right focus:outline-none"
+              />
+              <button onClick={() => removeMamaWeek(w.id)} className="text-rose-500 hover:text-rose-600 text-xs">×</button>
+            </div>
           </div>
         ))}
         <div className="flex gap-2 mt-3">
@@ -125,7 +144,7 @@ export default function IngresoHogar() {
             type="number"
             value={newAmount}
             onChange={e => setNewAmount(e.target.value)}
-            placeholder="Monto de la semana"
+            placeholder="Monto de la semana nueva"
             className="neu-input px-3 py-2 text-sm flex-1"
           />
           <button onClick={addMamaWeek} className="neu-btn px-4 py-2 text-sm font-medium text-emerald-700">

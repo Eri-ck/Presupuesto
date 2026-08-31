@@ -107,7 +107,7 @@ export default function MovimientosRecientes() {
                 </div>
                 <span className="text-sm shrink-0">{money(t.amount)}</span>
                 <button onClick={() => setEditingId(isEditing ? null : t.id)}
-                  className="neu-btn text-xs shrink-0 px-3 py-1">
+                  className="neu-btn text-xs shrink-0 px-3 py-1 font-medium ${isEditing ? 'text-rose-600' : 'text-teal-600'}`">
                   {isEditing ? 'Cerrar' : 'Editar'}
                 </button>
               </div>
