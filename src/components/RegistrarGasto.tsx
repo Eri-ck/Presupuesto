@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
+import { useQuincena } from '@/lib/QuincenaContext'
 import { currentQuincenaIndex, quincenaFromIndex, toISODateString } from '@/lib/quincena'
 import type { Category, Card, Profile, Priority } from '@/lib/types'
 
@@ -9,6 +10,7 @@ const TYPE_TAGS = ['Alimentos', 'Cultura', 'Entretenimiento', 'Escuela', 'Trabaj
 
 export default function RegistrarGasto() {
   const supabase = createClient()
+  const { viewedIndex, currentIndex } = useQuincena()
   const [categories, setCategories] = useState<Category[]>([])
   const [cards, setCards] = useState<Card[]>([])
   const [profiles, setProfiles] = useState<Profile[]>([])
@@ -73,8 +75,14 @@ export default function RegistrarGasto() {
   }
 
   return (
-    <div className="neu-raised max-w-xl p-6 mt-6 font-mono text-[var(--neu-text)]">
-      <h2 className="text-lg mb-4 font-semibold">Registrar gasto</h2>
+    <div className="neu-raised max-w-xl p-6 mt-6 font-mono text-[var(--neu-text)]" style={{ borderLeft: '4px solid #854f0b' }}>
+      <h2 className="text-lg font-semibold mb-4" style={{ color: '#854f0b' }}>Registrar gasto</h2>
+
+      {viewedIndex !== currentIndex && (
+        <div className="neu-pressed text-amber-700 text-sm p-3 mb-4">
+          Estás viendo otra quincena. Los gastos que registres aquí se guardan con la fecha de HOY, no en la quincena que estás mirando.
+        </div>
+      )}
 
       <div className="grid grid-cols-2 gap-3 mb-3">
         <input value={desc} onChange={e => setDesc(e.target.value)} placeholder="Descripción"
@@ -125,7 +133,7 @@ export default function RegistrarGasto() {
 
       {error && <div className="text-rose-600 text-sm mb-3">{error}</div>}
 
-      <button onClick={submit} disabled={saving} className="neu-btn px-4 py-2 text-sm text-emerald-700 font-medium">
+      <button onClick={submit} disabled={saving} className="neu-btn-primary px-4 py-2 text-sm font-medium">
         {saving ? 'Guardando…' : '+ Registrar gasto'}
       </button>
     </div>

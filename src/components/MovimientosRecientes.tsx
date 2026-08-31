@@ -2,11 +2,13 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
-import { currentQuincenaIndex, quincenaFromIndex, toISODateString } from '@/lib/quincena'
+import { useQuincena } from '@/lib/QuincenaContext'
+import { quincenaFromIndex, toISODateString } from '@/lib/quincena'
 import type { Transaction, Category, Card as CardType, Profile } from '@/lib/types'
 
 export default function MovimientosRecientes() {
   const supabase = createClient()
+  const { viewedIndex } = useQuincena()
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [cards, setCards] = useState<CardType[]>([])
@@ -14,11 +16,11 @@ export default function MovimientosRecientes() {
   const [loading, setLoading] = useState(true)
   const [editingId, setEditingId] = useState<string | null>(null)
 
+  const { start } = quincenaFromIndex(viewedIndex)
+  const quincenaStart = toISODateString(start)
+
   async function loadAll() {
     setLoading(true)
-    const { start } = quincenaFromIndex(currentQuincenaIndex())
-    const quincenaStart = toISODateString(start)
-
     const { data: txns } = await supabase
       .from('transactions')
       .select('*')
@@ -35,7 +37,7 @@ export default function MovimientosRecientes() {
     setLoading(false)
   }
 
-  useEffect(() => { loadAll() }, [])
+  useEffect(() => { loadAll() }, [viewedIndex])
 
   async function updateCategory(id: string, categoryId: string) {
     await supabase.from('transactions').update({ category_id: categoryId }).eq('id', id)
@@ -63,8 +65,8 @@ export default function MovimientosRecientes() {
   const fmtTime = (iso: string) => new Date(iso).toLocaleString('es-MX', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
 
   return (
-    <div className="neu-raised max-w-xl p-6 mt-6 font-mono text-[var(--neu-text)]">
-      <h2 className="text-lg mb-4 font-semibold">Movimientos recientes</h2>
+    <div className="neu-raised max-w-xl p-6 mt-6 font-mono text-[var(--neu-text)]" style={{ borderLeft: '4px solid #0f6e56' }}>
+      <h2 className="text-lg font-semibold mb-4" style={{ color: '#0f6e56' }}>Movimientos recientes</h2>
       {transactions.length === 0 && (
         <div className="text-[var(--neu-text-dim)] text-sm">Sin movimientos todavía en esta quincena.</div>
       )}
@@ -107,7 +109,7 @@ export default function MovimientosRecientes() {
                 </div>
                 <span className="text-sm shrink-0">{money(t.amount)}</span>
                 <button onClick={() => setEditingId(isEditing ? null : t.id)}
-                  className="neu-btn text-xs shrink-0 px-3 py-1 font-medium ${isEditing ? 'text-rose-600' : 'text-teal-600'}`">
+                  className={`text-xs shrink-0 px-3 py-1 rounded-full font-medium ${isEditing ? 'neu-btn-danger' : 'neu-btn-primary'}`}>
                   {isEditing ? 'Cerrar' : 'Editar'}
                 </button>
               </div>

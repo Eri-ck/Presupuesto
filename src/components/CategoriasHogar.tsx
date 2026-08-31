@@ -2,11 +2,13 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
-import { currentQuincenaIndex, quincenaFromIndex, toISODateString } from '@/lib/quincena'
+import { useQuincena } from '@/lib/QuincenaContext'
+import { quincenaFromIndex, toISODateString } from '@/lib/quincena'
 import type { Category, Transaction } from '@/lib/types'
 
 export default function CategoriasHogar() {
   const supabase = createClient()
+  const { viewedIndex } = useQuincena()
   const [categories, setCategories] = useState<Category[]>([])
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [loading, setLoading] = useState(true)
@@ -14,8 +16,7 @@ export default function CategoriasHogar() {
   const [newBudget, setNewBudget] = useState('')
   const [newType, setNewType] = useState<'fijo' | 'variable'>('fijo')
 
-  const idx = currentQuincenaIndex()
-  const { start } = quincenaFromIndex(idx)
+  const { start } = quincenaFromIndex(viewedIndex)
   const quincenaStart = toISODateString(start)
 
   async function loadAll() {
@@ -27,7 +28,7 @@ export default function CategoriasHogar() {
     setLoading(false)
   }
 
-  useEffect(() => { loadAll() }, [])
+  useEffect(() => { loadAll() }, [viewedIndex])
 
   function spentFor(catId: string) {
     return transactions.filter(t => t.category_id === catId).reduce((s, t) => s + Number(t.amount), 0)
@@ -78,7 +79,7 @@ export default function CategoriasHogar() {
                 className="w-16 bg-transparent border-b border-[var(--neu-shadow-dark)] text-right text-[var(--neu-text)] focus:outline-none"
               />
             </span>
-            <button onClick={() => removeCategory(c.id)} className="text-[var(--neu-text-dim)] hover:text-rose-500 px-1">×</button>
+            <button onClick={() => removeCategory(c.id)} className="neu-btn-danger text-xs px-2 py-1">×</button>
           </div>
         </div>
         <div className="h-2 rounded-full overflow-hidden bg-[var(--neu-shadow-dark)]/30">
@@ -89,8 +90,8 @@ export default function CategoriasHogar() {
   }
 
   return (
-    <div className="neu-raised max-w-xl p-6 mt-6 font-mono text-[var(--neu-text)]">
-      <h2 className="text-lg mb-4 font-semibold">Categorías del hogar</h2>
+    <div className="neu-raised max-w-xl p-6 mt-6 font-mono text-[var(--neu-text)]" style={{ borderLeft: '4px solid #0f6e56' }}>
+      <h2 className="text-lg font-semibold mb-4" style={{ color: '#0f6e56' }}>Categorías del hogar</h2>
 
       {overBudget.length > 0 && (
         <div className="neu-pressed text-rose-600 text-sm p-3 mb-4">
@@ -105,7 +106,7 @@ export default function CategoriasHogar() {
           placeholder="Nueva categoría fija" className="neu-input flex-1 px-3 py-2 text-sm" />
         <input type="number" value={newType === 'fijo' ? newBudget : ''} onChange={e => { setNewType('fijo'); setNewBudget(e.target.value) }}
           placeholder="Presupuesto" className="neu-input w-28 px-3 py-2 text-sm" />
-        <button onClick={() => { setNewType('fijo'); addCategory() }} className="neu-btn px-4 py-2 text-sm text-emerald-700">+</button>
+        <button onClick={() => { setNewType('fijo'); addCategory() }} className="neu-btn-primary px-4 py-2 text-sm">+</button>
       </div>
 
       <div className="text-xs uppercase text-[var(--neu-text-dim)] mb-2 tracking-wide">Gastos variables</div>
@@ -115,7 +116,7 @@ export default function CategoriasHogar() {
           placeholder="Nueva categoría variable" className="neu-input flex-1 px-3 py-2 text-sm" />
         <input type="number" value={newType === 'variable' ? newBudget : ''} onChange={e => { setNewType('variable'); setNewBudget(e.target.value) }}
           placeholder="Presupuesto" className="neu-input w-28 px-3 py-2 text-sm" />
-        <button onClick={() => { setNewType('variable'); addCategory() }} className="neu-btn px-4 py-2 text-sm text-emerald-700">+</button>
+        <button onClick={() => { setNewType('variable'); addCategory() }} className="neu-btn-primary px-4 py-2 text-sm">+</button>
       </div>
     </div>
   )

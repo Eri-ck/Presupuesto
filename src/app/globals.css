@@ -69,3 +69,20 @@ body {
   color: var(--neu-text);
 }
 .neu-input::placeholder { color: var(--neu-text-dim); }
+
+
+.neu-btn-primary {
+  background: #4FAE7C;
+  color: white;
+  border-radius: 999px;
+  box-shadow: 4px 4px 8px var(--neu-shadow-dark), -4px -4px 8px var(--neu-shadow-light);
+}
+.neu-btn-primary:active { box-shadow: inset 2px 2px 4px rgba(0,0,0,0.3); }
+
+.neu-btn-danger {
+  background: #e24b4a;
+  color: white;
+  border-radius: 999px;
+  box-shadow: 4px 4px 8px var(--neu-shadow-dark), -4px -4px 8px var(--neu-shadow-light);
+}
+.neu-btn-danger:active { box-shadow: inset 2px 2px 4px rgba(0,0,0,0.3); }
