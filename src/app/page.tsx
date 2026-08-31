@@ -7,7 +7,6 @@ import IngresoHogar from '@/components/IngresoHogar'
 import CategoriasHogar from '@/components/CategoriasHogar'
 import TarjetasCredito from '@/components/TarjetasCredito'
 import MetasAhorro from '@/components/MetasAhorro'
-import RegistrarGasto from '@/components/RegistrarGasto'
 import MovimientosRecientes from '@/components/MovimientosRecientes'
 
 type Tab = 'home' | 'tarjetas' | 'ahorros'
@@ -31,7 +30,6 @@ export default function Home() {
             <>
               <IngresoHogar />
               <CategoriasHogar />
-              <RegistrarGasto />
               <MovimientosRecientes />
             </>
           )}
