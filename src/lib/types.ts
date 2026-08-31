@@ -47,6 +47,7 @@ export interface Transaction {
   quincena_start: string
   occurred_at: string
   created_at: string
+  needs_invoice: boolean
 }
 
 export interface IncomeEntry {

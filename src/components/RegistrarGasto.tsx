@@ -19,6 +19,8 @@ export default function RegistrarGasto() {
   const [paymentMethod, setPaymentMethod] = useState('efectivo')
   const [priority, setPriority] = useState<Priority>('necesidad')
   const [selectedTags, setSelectedTags] = useState<string[]>([])
+  const [occurredAt, setOccurredAt] = useState(() => new Date().toISOString().slice(0, 10))
+  const [needsInvoice, setNeedsInvoice] = useState(false)
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
 
@@ -59,12 +61,15 @@ export default function RegistrarGasto() {
       card_id: isCard ? paymentMethod : null,
       priority,
       tags: selectedTags,
+      needs_invoice: needsInvoice,
+      occurred_at: new Date(occurredAt + 'T12:00:00').toISOString(),
       quincena_start: toISODateString(start),
     })
 
-    setDesc(''); setAmount(''); setSelectedTags([])
+    setDesc(''); setAmount(''); setSelectedTags([]); setNeedsInvoice(false)
+    setOccurredAt(new Date().toISOString().slice(0, 10))
     setSaving(false)
-    window.location.reload() // refresca categorías y tarjetas con el nuevo gasto
+    window.location.reload()
   }
 
   return (
@@ -75,6 +80,8 @@ export default function RegistrarGasto() {
         <input value={desc} onChange={e => setDesc(e.target.value)} placeholder="Descripción"
           className="bg-neutral-800 border border-neutral-700 rounded px-2 py-1 text-sm col-span-2" />
         <input type="number" value={amount} onChange={e => setAmount(e.target.value)} placeholder="Monto"
+          className="bg-neutral-800 border border-neutral-700 rounded px-2 py-1 text-sm" />
+        <input type="date" value={occurredAt} onChange={e => setOccurredAt(e.target.value)}
           className="bg-neutral-800 border border-neutral-700 rounded px-2 py-1 text-sm" />
         <select value={categoryId} onChange={e => setCategoryId(e.target.value)}
           className="bg-neutral-800 border border-neutral-700 rounded px-2 py-1 text-sm">
@@ -90,6 +97,10 @@ export default function RegistrarGasto() {
           <option value="efectivo">Efectivo / débito</option>
           {cards.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
+        <label className="flex items-center gap-2 text-sm bg-neutral-800 border border-neutral-700 rounded px-2 py-1">
+          <input type="checkbox" checked={needsInvoice} onChange={e => setNeedsInvoice(e.target.checked)} />
+          Necesita factura
+        </label>
       </div>
 
       <div className="flex gap-4 mb-3 text-sm">
