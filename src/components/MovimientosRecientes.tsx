@@ -65,7 +65,7 @@ export default function MovimientosRecientes() {
   const fmtTime = (iso: string) => new Date(iso).toLocaleString('es-MX', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
 
   return (
-    <div className="neu-raised max-w-xl p-6 mt-6 font-mono text-[var(--neu-text)]" style={{ borderLeft: '4px solid #0f6e56' }}>
+    <div className="neu-raised max-w-xl p-6 mt-6 font-mono text-[var(--neu-text)]">
       <h2 className="text-lg font-semibold mb-4" style={{ color: '#0f6e56' }}>Movimientos recientes</h2>
       {transactions.length === 0 && (
         <div className="text-[var(--neu-text-dim)] text-sm">Sin movimientos todavía en esta quincena.</div>

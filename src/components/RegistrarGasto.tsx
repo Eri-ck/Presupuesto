@@ -75,7 +75,7 @@ export default function RegistrarGasto() {
   }
 
   return (
-    <div className="neu-raised max-w-xl p-6 mt-6 font-mono text-[var(--neu-text)]" style={{ borderLeft: '4px solid #854f0b' }}>
+    <div className="neu-raised max-w-xl p-6 mt-6 font-mono text-[var(--neu-text)]">
       <h2 className="text-lg font-semibold mb-4" style={{ color: '#854f0b' }}>Registrar gasto</h2>
 
       {viewedIndex !== currentIndex && (
