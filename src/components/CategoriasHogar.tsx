@@ -14,8 +14,8 @@ export default function CategoriasHogar() {
   const [loading, setLoading] = useState(true)
   const [newName, setNewName] = useState('')
   const [newBudget, setNewBudget] = useState('')
-  const [showAddFijo, setShowAddFijo] = useState(false)
-  const [showAddVariable, setShowAddVariable] = useState(false)
+  const [showAdd, setShowAdd] = useState(false)
+  const [activeType, setActiveType] = useState<'fijo' | 'variable'>('fijo')
 
   const { start } = quincenaFromIndex(viewedIndex)
   const quincenaStart = toISODateString(start)
@@ -35,12 +35,13 @@ export default function CategoriasHogar() {
     return transactions.filter(t => t.category_id === catId).reduce((s, t) => s + Number(t.amount), 0)
   }
 
-  async function addCategory(type: 'fijo' | 'variable') {
+  async function addCategory() {
     const budget = Number(newBudget) || 0
     if (!newName.trim()) return
-    await supabase.from('categories').insert({ name: newName.trim(), type, budget_current: budget })
-    setNewName(''); setNewBudget('')
-    setShowAddFijo(false); setShowAddVariable(false)
+    await supabase.from('categories').insert({ name: newName.trim(), type: activeType, budget_current: budget })
+    setNewName('')
+    setNewBudget('')
+    setShowAdd(false)
     loadAll()
   }
 
@@ -55,12 +56,13 @@ export default function CategoriasHogar() {
     loadAll()
   }
 
-  if (loading) return <div className="p-6 text-[var(--neu-text-dim)]">Cargando categorías…</div>
+  if (loading) {
+    return <div className="p-6 text-[var(--neu-text-dim)]">Cargando categorías…</div>
+  }
 
   const money = (n: number) => '$' + Math.round(n).toLocaleString('es-MX')
-  const fijas = categories.filter(c => c.type === 'fijo')
-  const variables = categories.filter(c => c.type === 'variable')
-  const overBudget = categories.filter(c => spentFor(c.id) > c.budget_current)
+  const list = categories.filter(c => c.type === activeType)
+  const overBudget = list.filter(c => spentFor(c.id) > c.budget_current)
 
   function renderRow(c: Category) {
     const spent = spentFor(c.id)
@@ -81,7 +83,7 @@ export default function CategoriasHogar() {
           </div>
         </div>
         <div className="h-2 rounded-full overflow-hidden bg-[var(--neu-shadow-dark)]/30">
-          <div className={`h-full ${color}`} style={{ width: `${pct}%` }} />
+          <div className={'h-full ' + color} style={{ width: pct + '%' }} />
         </div>
       </div>
     )
@@ -89,7 +91,23 @@ export default function CategoriasHogar() {
 
   return (
     <div className="neu-raised max-w-xl p-6 mt-6 font-mono text-[var(--neu-text)]">
-      <h2 className="text-lg font-semibold mb-4" style={{ color: '#0f6e56' }}>Categorías del hogar</h2>
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-lg font-semibold" style={{ color: '#0f6e56' }}>Categorías del hogar</h2>
+        <button onClick={() => setShowAdd(v => !v)} className="neu-btn-primary w-7 h-7 flex items-center justify-center text-base">
+          {showAdd ? '×' : '+'}
+        </button>
+      </div>
+
+      <div className="flex gap-2 mb-4">
+        <button onClick={() => setActiveType('fijo')}
+          className={activeType === 'fijo' ? 'neu-btn-primary px-4 py-1.5 text-sm' : 'neu-btn px-4 py-1.5 text-sm text-[var(--neu-text-dim)]'}>
+          Fijos
+        </button>
+        <button onClick={() => setActiveType('variable')}
+          className={activeType === 'variable' ? 'neu-btn-primary px-4 py-1.5 text-sm' : 'neu-btn px-4 py-1.5 text-sm text-[var(--neu-text-dim)]'}>
+          Variables
+        </button>
+      </div>
 
       {overBudget.length > 0 && (
         <div className="neu-pressed text-rose-600 text-sm p-3 mb-4">
@@ -97,31 +115,20 @@ export default function CategoriasHogar() {
         </div>
       )}
 
-      <div className="flex justify-between items-center mb-2">
-        <span className="text-xs uppercase text-[var(--neu-text-dim)] tracking-wide">Gastos fijos</span>
-        <button onClick={() => setShowAddFijo(v => !v)} className="neu-btn-primary w-6 h-6 flex items-center justify-center text-sm">+</button>
-      </div>
-      {fijas.map(renderRow)}
-      {showAddFijo && (
-        <div className="flex gap-2 mb-6">
-          <input value={newName} onChange={e => setNewName(e.target.value)} placeholder="Nombre" className="neu-input flex-1 px-3 py-2 text-sm" />
-          <input type="number" value={newBudget} onChange={e => setNewBudget(e.target.value)} placeholder="Presupuesto" className="neu-input w-28 px-3 py-2 text-sm" />
-          <button onClick={() => addCategory('fijo')} className="neu-btn-primary px-4 py-2 text-sm">Agregar</button>
+      {showAdd && (
+        <div className="flex gap-2 mb-4">
+          <input value={newName} onChange={e => setNewName(e.target.value)} placeholder={'Nueva categoría ' + activeType}
+            className="neu-input flex-1 px-3 py-2 text-sm" />
+          <input type="number" value={newBudget} onChange={e => setNewBudget(e.target.value)} placeholder="Presupuesto"
+            className="neu-input w-28 px-3 py-2 text-sm" />
+          <button onClick={addCategory} className="neu-btn-primary px-4 py-2 text-sm">Agregar</button>
         </div>
       )}
 
-      <div className="flex justify-between items-center mb-2 mt-4">
-        <span className="text-xs uppercase text-[var(--neu-text-dim)] tracking-wide">Gastos variables</span>
-        <button onClick={() => setShowAddVariable(v => !v)} className="neu-btn-primary w-6 h-6 flex items-center justify-center text-sm">+</button>
-      </div>
-      {variables.map(renderRow)}
-      {showAddVariable && (
-        <div className="flex gap-2">
-          <input value={newName} onChange={e => setNewName(e.target.value)} placeholder="Nombre" className="neu-input flex-1 px-3 py-2 text-sm" />
-          <input type="number" value={newBudget} onChange={e => setNewBudget(e.target.value)} placeholder="Presupuesto" className="neu-input w-28 px-3 py-2 text-sm" />
-          <button onClick={() => addCategory('variable')} className="neu-btn-primary px-4 py-2 text-sm">Agregar</button>
-        </div>
+      {list.length === 0 && (
+        <div className="text-[var(--neu-text-dim)] text-sm">Sin categorías {activeType === 'fijo' ? 'fijas' : 'variables'} todavía.</div>
       )}
+      {list.map(renderRow)}
     </div>
   )
 }

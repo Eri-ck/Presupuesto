@@ -6,7 +6,16 @@ import { useQuincena } from '@/lib/QuincenaContext'
 import { quincenaFromIndex, toISODateString, mostRecentSaturday } from '@/lib/quincena'
 import type { Profile, IncomeEntry } from '@/lib/types'
 
-const DEFAULT_ALLOCATION = { personal_pct: 8.4, ahorro_general_pct: 15, ahorro_navidad_pct: 5 }
+const DEFAULT_ALLOCATION = {
+  fijos_pct: 50,
+  variables_pct: 20,
+  ahorro_intocable_pct: 5,
+  ahorro_general_pct: 10,
+  ahorro_navidad_pct: 5,
+  personal_pct: 10,
+}
+
+type AllocationKey = keyof typeof DEFAULT_ALLOCATION
 
 export default function IngresoHogar() {
   const supabase = createClient()
@@ -61,12 +70,16 @@ export default function IngresoHogar() {
       .eq('quincena_start', quincenaStart)
       .limit(1)
     if (allocData?.[0]) {
+      const row = allocData[0]
       setAllocation({
-        personal_pct: Number(allocData[0].personal_pct),
-        ahorro_general_pct: Number(allocData[0].ahorro_general_pct),
-        ahorro_navidad_pct: Number(allocData[0].ahorro_navidad_pct),
+        fijos_pct: Number(row.fijos_pct),
+        variables_pct: Number(row.variables_pct),
+        ahorro_intocable_pct: Number(row.ahorro_intocable_pct),
+        ahorro_general_pct: Number(row.ahorro_general_pct),
+        ahorro_navidad_pct: Number(row.ahorro_navidad_pct),
+        personal_pct: Number(row.personal_pct),
       })
-      setAllocationId(allocData[0].id)
+      setAllocationId(row.id)
     } else {
       setAllocation(DEFAULT_ALLOCATION)
       setAllocationId(null)
@@ -78,27 +91,21 @@ export default function IngresoHogar() {
 
   async function saveAllocation(next: typeof allocation) {
     if (allocationId) {
-      await supabase.from('allocation_settings').update({
-        personal_pct: next.personal_pct,
-        ahorro_general_pct: next.ahorro_general_pct,
-        ahorro_navidad_pct: next.ahorro_navidad_pct,
-      }).eq('id', allocationId)
+      await supabase.from('allocation_settings').update(next).eq('id', allocationId)
     } else {
       const { data } = await supabase.from('allocation_settings').insert({
         quincena_start: quincenaStart,
-        personal_pct: next.personal_pct,
-        ahorro_general_pct: next.ahorro_general_pct,
-        ahorro_navidad_pct: next.ahorro_navidad_pct,
+        ...next,
       }).select().single()
       if (data) setAllocationId(data.id)
     }
   }
 
-  function updateAllocationLive(key: keyof typeof allocation, value: number) {
+  function updateAllocationLive(key: AllocationKey, value: number) {
     setAllocation(prev => ({ ...prev, [key]: value }))
   }
 
-  function commitAllocation(key: keyof typeof allocation, value: number) {
+  function commitAllocation(key: AllocationKey, value: number) {
     const next = { ...allocation, [key]: value }
     setAllocation(next)
     saveAllocation(next)
@@ -167,24 +174,24 @@ export default function IngresoHogar() {
   const mamaShare = total > 0 ? mamaTotal / total : 0
   const papaShare = total > 0 ? papaTotal / total : 0
 
-  const personalAmt = total * (allocation.personal_pct / 100)
-  const ahorroGeneralAmt = total * (allocation.ahorro_general_pct / 100)
-  const ahorroNavidadAmt = total * (allocation.ahorro_navidad_pct / 100)
-  const hogarPool = total - personalAmt - ahorroGeneralAmt - ahorroNavidadAmt
-
   const money = (n: number) => '$' + Math.round(n).toLocaleString('es-MX')
 
-  function sliderRow(label: string, key: keyof typeof allocation, amount: number, color: string) {
+  const sumPct = allocation.fijos_pct + allocation.variables_pct + allocation.ahorro_intocable_pct +
+    allocation.ahorro_general_pct + allocation.ahorro_navidad_pct + allocation.personal_pct
+  const sumOk = Math.abs(sumPct - 100) < 0.05
+
+  function sliderRow(label: string, key: AllocationKey, color: string) {
+    const amount = total * (allocation[key] / 100)
     const mamaPart = amount * mamaShare
     const papaPart = amount * papaShare
     return (
-      <div className="mb-4">
+      <div className="mb-4" key={key}>
         <div className="flex justify-between text-sm mb-1" style={{ color }}>
           <span>{label} ({allocation[key].toFixed(1)}%)</span>
-          <span>- {money(amount)}</span>
+          <span>{money(amount)}</span>
         </div>
         <input
-          type="range" min={0} max={40} step={0.5}
+          type="range" min={0} max={60} step={0.5}
           value={allocation[key]}
           onInput={e => updateAllocationLive(key, Number((e.target as HTMLInputElement).value))}
           onChange={e => commitAllocation(key, Number(e.target.value))}
@@ -246,12 +253,18 @@ export default function IngresoHogar() {
       </div>
 
       <div className="mt-4">
-        {sliderRow('Personal', 'personal_pct', personalAmt, '#e24b4a')}
-        {sliderRow('Ahorro general', 'ahorro_general_pct', ahorroGeneralAmt, '#3b6d11')}
-        {sliderRow('Ahorro navideño', 'ahorro_navidad_pct', ahorroNavidadAmt, '#854f0b')}
-        <div className="flex justify-between pt-3 border-t border-[var(--neu-shadow-dark)]/40 font-semibold text-sm">
-          <span>= Disponible para el hogar</span><span>{money(hogarPool)}</span>
-        </div>
+        {sliderRow('Gastos fijos', 'fijos_pct', '#0f6e56')}
+        {sliderRow('Gastos variables', 'variables_pct', '#534ab7')}
+        {sliderRow('Ahorro intocable', 'ahorro_intocable_pct', '#1b3a8a')}
+        {sliderRow('Ahorro disponible', 'ahorro_general_pct', '#3b6d11')}
+        {sliderRow('Ahorro eventual', 'ahorro_navidad_pct', '#854f0b')}
+        {sliderRow('Uso personal', 'personal_pct', '#e24b4a')}
+      </div>
+
+      <div className={'mt-2 p-3 text-sm rounded-xl ' + (sumOk ? 'text-emerald-700' : 'text-rose-600')} style={{ background: sumOk ? undefined : 'rgba(226,75,74,0.08)' }}>
+        {sumOk
+          ? `Suman ${sumPct.toFixed(1)}% — todo cuadra.`
+          : `Ojo: suman ${sumPct.toFixed(1)}%, no 100%. Ajusta los sliders.`}
       </div>
     </div>
   )
