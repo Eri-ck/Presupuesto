@@ -2,15 +2,14 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
-import { useQuincena } from '@/lib/QuincenaContext'
 import { currentQuincenaIndex, quincenaFromIndex, toISODateString } from '@/lib/quincena'
 import type { Transaction, Category, Card as CardType, Profile, Priority } from '@/lib/types'
 
 const TYPE_TAGS = ['Alimentos', 'Cultura', 'Entretenimiento', 'Escuela', 'Trabajo', 'Comida', 'Salud', 'Transporte', 'Otro']
+const DAYS_WINDOW = 20
 
 export default function MovimientosRecientes() {
   const supabase = createClient()
-  const { viewedIndex, currentIndex } = useQuincena()
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [cards, setCards] = useState<CardType[]>([])
@@ -26,34 +25,42 @@ export default function MovimientosRecientes() {
   const [paymentMethod, setPaymentMethod] = useState('efectivo')
   const [priority, setPriority] = useState<Priority>('necesidad')
   const [selectedTags, setSelectedTags] = useState<string[]>([])
-  const [occurredAt, setOccurredAt] = useState(() => new Date().toISOString().slice(0, 10))
+  const [occurredAt, setOccurredAt] = useState('')
   const [needsInvoice, setNeedsInvoice] = useState(false)
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
 
-  const { start } = quincenaFromIndex(viewedIndex)
-  const quincenaStart = toISODateString(start)
+  useEffect(() => {
+    setOccurredAt(new Date().toISOString().slice(0, 10))
+  }, [])
 
   async function loadAll() {
     setLoading(true)
-    const { data: txns } = await supabase
+    const cutoffIso = new Date(Date.now() - DAYS_WINDOW * 24 * 60 * 60 * 1000).toISOString()
+
+    const txnRes = await supabase
       .from('transactions')
       .select('*')
-      .eq('quincena_start', quincenaStart)
+      .gte('occurred_at', cutoffIso)
       .order('created_at', { ascending: false })
-    const { data: cats } = await supabase.from('categories').select('*').order('name')
-    const { data: cardData } = await supabase.from('cards').select('*').order('name')
-    const { data: profileData } = await supabase.from('profiles').select('*')
+    const catRes = await supabase.from('categories').select('*').order('name')
+    const cardRes = await supabase.from('cards').select('*').order('name')
+    const profileRes = await supabase.from('profiles').select('*')
 
-    setTransactions(txns ?? [])
-    setCategories(cats ?? [])
-    setCards(cardData ?? [])
-    setProfiles(profileData ?? [])
-    if (!profileId) setProfileId(profileData?.find(p => p.role === 'mama' || p.role === 'papa')?.id ?? '')
+    setTransactions(txnRes.data ?? [])
+    setCategories(catRes.data ?? [])
+    setCards(cardRes.data ?? [])
+    setProfiles(profileRes.data ?? [])
+    if (!profileId) {
+      const found = (profileRes.data ?? []).find(p => p.role === 'mama' || p.role === 'papa')
+      if (found) setProfileId(found.id)
+    }
     setLoading(false)
   }
 
-  useEffect(() => { loadAll() }, [viewedIndex])
+  useEffect(() => {
+    loadAll()
+  }, [])
 
   async function updateCategory(id: string, catId: string) {
     await supabase.from('transactions').update({ category_id: catId }).eq('id', id)
@@ -78,7 +85,7 @@ export default function MovimientosRecientes() {
   }
 
   function toggleTag(tag: string) {
-    setSelectedTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag])
+    setSelectedTags(prev => (prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]))
   }
 
   async function submit() {
@@ -121,15 +128,19 @@ export default function MovimientosRecientes() {
     return <div className="p-6 text-[var(--neu-text-dim)]">Cargando movimientos…</div>
   }
 
-  const money = (n: number) => '$' + Math.round(n).toLocaleString('es-MX')
-  const fmtDate = (iso: string) => new Date(iso).toLocaleDateString('es-MX', { day: 'numeric', month: 'short' })
-  const fmtTime = (iso: string) => new Date(iso).toLocaleString('es-MX', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
-
+  function money(n: number) {
+    return '$' + Math.round(n).toLocaleString('es-MX')
+  }
+  function fmtDate(iso: string) {
+    return new Date(iso).toLocaleDateString('es-MX', { day: 'numeric', month: 'short' })
+  }
+  function fmtTime(iso: string) {
+    return new Date(iso).toLocaleString('es-MX', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+  }
   function priorityBadgeClass(p: string) {
     if (p === 'necesidad') return 'bg-emerald-100 text-emerald-700'
     return 'bg-amber-100 text-amber-700'
   }
-
   function priorityLabel(p: string) {
     if (p === 'necesidad') return 'Necesidad'
     return 'Prescindible'
@@ -137,20 +148,16 @@ export default function MovimientosRecientes() {
 
   return (
     <div className="neu-raised max-w-xl p-6 mt-6 font-mono text-[var(--neu-text)]">
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex justify-between items-center mb-1">
         <h2 className="text-lg font-semibold" style={{ color: '#0f6e56' }}>Movimientos recientes</h2>
         <button onClick={() => setShowAdd(v => !v)} className="neu-btn-primary w-7 h-7 flex items-center justify-center text-base">
           {showAdd ? '×' : '+'}
         </button>
       </div>
+      <div className="text-xs text-[var(--neu-text-dim)] mb-4">Últimos {DAYS_WINDOW} días, sin importar la quincena que estés viendo arriba.</div>
 
       {showAdd && (
         <div className="neu-pressed p-4 mb-4">
-          {viewedIndex !== currentIndex && (
-            <div className="text-amber-700 text-xs mb-3">
-              Estás viendo otra quincena, este gasto se guarda con la fecha de HOY.
-            </div>
-          )}
           <div className="grid grid-cols-2 gap-3 mb-3">
             <input value={desc} onChange={e => setDesc(e.target.value)} placeholder="Descripción"
               className="neu-input px-3 py-2 text-sm col-span-2" />
@@ -203,7 +210,7 @@ export default function MovimientosRecientes() {
       )}
 
       {transactions.length === 0 && (
-        <div className="text-[var(--neu-text-dim)] text-sm">Sin movimientos todavía en esta quincena.</div>
+        <div className="text-[var(--neu-text-dim)] text-sm">Sin movimientos en los últimos {DAYS_WINDOW} días.</div>
       )}
 
       <div className="flex flex-col">
