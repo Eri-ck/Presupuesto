@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import { useQuincena } from '@/lib/QuincenaContext'
-import { quincenaFromIndex, toISODateString, mostRecentSaturday } from '@/lib/quincena'
+import { quincenaFromIndex, toISODateString } from '@/lib/quincena'
 import type { Profile, IncomeEntry } from '@/lib/types'
 
 const DEFAULT_ALLOCATION = {
@@ -15,6 +15,8 @@ const DEFAULT_ALLOCATION = {
   personal_pct: 10,
 }
 
+const MAMA_SUGGESTED = 22500
+
 type AllocationKey = keyof typeof DEFAULT_ALLOCATION
 
 export default function IngresoHogar() {
@@ -23,9 +25,9 @@ export default function IngresoHogar() {
   const [loading, setLoading] = useState(true)
   const [mama, setMama] = useState<Profile | null>(null)
   const [papa, setPapa] = useState<Profile | null>(null)
-  const [mamaWeeks, setMamaWeeks] = useState<IncomeEntry[]>([])
+  const [mamaEntry, setMamaEntry] = useState<IncomeEntry | null>(null)
   const [papaEntry, setPapaEntry] = useState<IncomeEntry | null>(null)
-  const [newAmount, setNewAmount] = useState('')
+  const [mamaAmount, setMamaAmount] = useState('')
   const [papaAmount, setPapaAmount] = useState('')
   const [allocation, setAllocation] = useState(DEFAULT_ALLOCATION)
   const [allocationId, setAllocationId] = useState<string | null>(null)
@@ -44,13 +46,15 @@ export default function IngresoHogar() {
     setPapa(papaProfile)
 
     if (mamaProfile) {
-      const { data: weeks } = await supabase
+      const { data: entries } = await supabase
         .from('income_entries')
         .select('*')
         .eq('profile_id', mamaProfile.id)
         .eq('quincena_start', quincenaStart)
-        .order('period_start', { ascending: true })
-      setMamaWeeks(weeks ?? [])
+        .order('created_at', { ascending: false })
+        .limit(1)
+      setMamaEntry(entries?.[0] ?? null)
+      setMamaAmount(entries?.[0]?.amount?.toString() ?? '')
     }
     if (papaProfile) {
       const { data: entries } = await supabase
@@ -111,30 +115,21 @@ export default function IngresoHogar() {
     saveAllocation(next)
   }
 
-  async function addMamaWeek() {
+  async function saveMamaDeposit() {
     if (!mama) return
-    const amount = Number(newAmount)
+    const amount = Number(mamaAmount)
     if (!amount || amount <= 0) return
-    const periodStart = toISODateString(mostRecentSaturday(new Date()))
-    await supabase.from('income_entries').insert({
-      profile_id: mama.id,
-      quincena_start: quincenaStart,
-      period_start: periodStart,
-      amount,
-      is_projection: isFuture,
-    })
-    setNewAmount('')
-    loadAll()
-  }
-
-  async function updateMamaWeek(id: string, value: string) {
-    const amount = Math.max(0, Number(value) || 0)
-    await supabase.from('income_entries').update({ amount }).eq('id', id)
-    loadAll()
-  }
-
-  async function removeMamaWeek(id: string) {
-    await supabase.from('income_entries').delete().eq('id', id)
+    if (mamaEntry) {
+      await supabase.from('income_entries').update({ amount }).eq('id', mamaEntry.id)
+    } else {
+      await supabase.from('income_entries').insert({
+        profile_id: mama.id,
+        quincena_start: quincenaStart,
+        period_start: quincenaStart,
+        amount,
+        is_projection: isFuture,
+      })
+    }
     loadAll()
   }
 
@@ -168,7 +163,7 @@ export default function IngresoHogar() {
     )
   }
 
-  const mamaTotal = mamaWeeks.reduce((s, w) => s + Number(w.amount), 0)
+  const mamaTotal = mamaEntry ? Number(mamaEntry.amount) : 0
   const papaTotal = papaEntry ? Number(papaEntry.amount) : 0
   const total = mamaTotal + papaTotal
   const mamaShare = total > 0 ? mamaTotal / total : 0
@@ -220,24 +215,17 @@ export default function IngresoHogar() {
         </div>
       )}
 
-      <div className="text-xs uppercase text-[var(--neu-text-dim)] mb-3 tracking-wide">Mamá, semanas de esta quincena</div>
-      {mamaWeeks.map(w => (
-        <div key={w.id} className="flex items-center justify-between py-1.5 text-sm gap-2">
-          <span className="text-[var(--neu-text-dim)]">{w.period_start}</span>
-          <div className="flex items-center gap-2">
-            <input type="number" defaultValue={w.amount} onBlur={e => updateMamaWeek(w.id, e.target.value)}
-              className="w-24 bg-transparent border-b border-[var(--neu-shadow-dark)] text-right focus:outline-none" />
-            <button onClick={() => removeMamaWeek(w.id)} className="neu-btn-danger text-xs px-2 py-1">×</button>
-          </div>
-        </div>
-      ))}
-      <div className="flex gap-2 mt-3">
-        <input type="number" value={newAmount} onChange={e => setNewAmount(e.target.value)}
-          placeholder={isFuture ? 'Monto proyectado' : 'Monto de la semana nueva'}
+      <div className="text-xs uppercase text-[var(--neu-text-dim)] mb-3 tracking-wide">Mamá, depósito de esta quincena</div>
+      <div className="flex gap-2">
+        <input type="number" value={mamaAmount} onChange={e => setMamaAmount(e.target.value)}
+          placeholder={String(MAMA_SUGGESTED)}
           className="neu-input px-3 py-2 text-sm flex-1" />
-        <button onClick={addMamaWeek} className="neu-btn-primary px-4 py-2 text-sm font-medium">+ Agregar</button>
+        <button onClick={saveMamaDeposit} className="neu-btn-primary px-4 py-2 text-sm font-medium">Guardar</button>
       </div>
-      <div className="flex justify-between mt-4 pt-3 border-t border-[var(--neu-shadow-dark)]/40 text-sm font-medium">
+      {!mamaEntry && (
+        <div className="text-xs text-[var(--neu-text-dim)] mt-1">Sueldo fijo mensual $45,000, sugerido {money(MAMA_SUGGESTED)} por quincena.</div>
+      )}
+      <div className="flex justify-between mt-3 pt-3 border-t border-[var(--neu-shadow-dark)]/40 text-sm font-medium">
         <span>Subtotal mamá</span><span>{money(mamaTotal)}</span>
       </div>
 
@@ -263,7 +251,7 @@ export default function IngresoHogar() {
 
       <div className={'mt-2 p-3 text-sm rounded-xl ' + (sumOk ? 'text-emerald-700' : 'text-rose-600')} style={{ background: sumOk ? undefined : 'rgba(226,75,74,0.08)' }}>
         {sumOk
-          ? `Suman ${sumPct.toFixed(1)}% — todo cuadra.`
+          ? `Suman ${sumPct.toFixed(1)}%, todo cuadra.`
           : `Ojo: suman ${sumPct.toFixed(1)}%, no 100%. Ajusta los sliders.`}
       </div>
     </div>
