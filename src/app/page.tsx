@@ -17,23 +17,21 @@ export default function Home() {
   return (
     <QuincenaProvider>
       <div className="min-h-screen flex flex-col items-center px-4 py-6 sm:px-10 sm:py-10">
-        <div className="w-full max-w-5xl">
+        <div className="w-full max-w-3xl">
           <QuincenaNavigator />
 
-          <div className="flex gap-2 mb-8">
+          <div className="flex gap-2 mb-8 justify-center">
             <button onClick={() => setTab('home')} className={tab === 'home' ? 'neu-btn-primary px-5 py-2 text-sm' : 'neu-btn px-5 py-2 text-sm'}>Home</button>
             <button onClick={() => setTab('tarjetas')} className={tab === 'tarjetas' ? 'neu-btn-primary px-5 py-2 text-sm' : 'neu-btn px-5 py-2 text-sm'}>Tarjetas</button>
             <button onClick={() => setTab('ahorros')} className={tab === 'ahorros' ? 'neu-btn-primary px-5 py-2 text-sm' : 'neu-btn px-5 py-2 text-sm'}>Ahorros</button>
           </div>
 
           {tab === 'home' && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+            <>
               <IngresoHogar />
-              <div className="flex flex-col gap-6">
-                <CategoriasHogar />
-                <MovimientosRecientes />
-              </div>
-            </div>
+              <CategoriasHogar />
+              <MovimientosRecientes />
+            </>
           )}
           {tab === 'tarjetas' && <TarjetasCredito />}
           {tab === 'ahorros' && <MetasAhorro />}
