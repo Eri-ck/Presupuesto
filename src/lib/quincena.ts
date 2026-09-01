@@ -1,4 +1,11 @@
-// Reglas de quincena y semana, iguales a las validadas en el prototipo HTML.
+// Reglas de quincena y semana. Todo "ahora" se calcula en hora de Ciudad de México,
+// sin importar en qué zona horaria corra el servidor (Vercel usa UTC por default).
+
+export function nowInMexico(): Date {
+  const now = new Date()
+  const mxString = now.toLocaleString('en-US', { timeZone: 'America/Mexico_City' })
+  return new Date(mxString)
+}
 
 export function quincenaIndex(date: Date): number {
   return date.getFullYear() * 24 + date.getMonth() * 2 + (date.getDate() <= 15 ? 0 : 1)
@@ -21,7 +28,7 @@ export function quincenaFromIndex(idx: number): { start: Date; end: Date } {
 }
 
 export function currentQuincenaIndex(): number {
-  return quincenaIndex(new Date())
+  return quincenaIndex(nowInMexico())
 }
 
 export function mostRecentSaturday(d: Date): Date {
@@ -53,7 +60,7 @@ export function formatQuincenaLabel(idx: number): string {
 }
 
 export function nextOccurrenceOfDay(day: number): Date {
-  const now = new Date()
+  const now = nowInMexico()
   now.setHours(0, 0, 0, 0)
   let d = new Date(now.getFullYear(), now.getMonth(), day)
   if (d < now) d.setMonth(d.getMonth() + 1)
@@ -61,7 +68,7 @@ export function nextOccurrenceOfDay(day: number): Date {
 }
 
 export function prevOccurrenceOfDay(day: number): Date {
-  const now = new Date()
+  const now = nowInMexico()
   now.setHours(0, 0, 0, 0)
   let d = new Date(now.getFullYear(), now.getMonth(), day)
   if (d > now) d.setMonth(d.getMonth() - 1)
