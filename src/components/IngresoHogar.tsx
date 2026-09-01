@@ -115,6 +115,11 @@ export default function IngresoHogar() {
     saveAllocation(next)
   }
 
+  function resetAllocation() {
+    setAllocation(DEFAULT_ALLOCATION)
+    saveAllocation(DEFAULT_ALLOCATION)
+  }
+
   async function saveMamaDeposit() {
     if (!mama) return
     const amount = Number(mamaAmount)
@@ -174,6 +179,13 @@ export default function IngresoHogar() {
   const sumPct = allocation.fijos_pct + allocation.variables_pct + allocation.ahorro_intocable_pct +
     allocation.ahorro_general_pct + allocation.ahorro_navidad_pct + allocation.personal_pct
   const sumOk = Math.abs(sumPct - 100) < 0.05
+  const isDefault = Math.abs(sumPct - 100) < 0.05 &&
+    allocation.fijos_pct === DEFAULT_ALLOCATION.fijos_pct &&
+    allocation.variables_pct === DEFAULT_ALLOCATION.variables_pct &&
+    allocation.ahorro_intocable_pct === DEFAULT_ALLOCATION.ahorro_intocable_pct &&
+    allocation.ahorro_general_pct === DEFAULT_ALLOCATION.ahorro_general_pct &&
+    allocation.ahorro_navidad_pct === DEFAULT_ALLOCATION.ahorro_navidad_pct &&
+    allocation.personal_pct === DEFAULT_ALLOCATION.personal_pct
 
   function sliderRow(label: string, key: AllocationKey, color: string) {
     const amount = total * (allocation[key] / 100)
@@ -240,7 +252,16 @@ export default function IngresoHogar() {
         <span>Total ingreso quincenal</span><span>{money(total)}</span>
       </div>
 
-      <div className="mt-4">
+      <div className="flex justify-between items-center mt-4 mb-1">
+        <span className="text-xs uppercase text-[var(--neu-text-dim)] tracking-wide">Reparto del ingreso</span>
+        {!isDefault && (
+          <button onClick={resetAllocation} className="neu-btn text-xs px-3 py-1 text-[var(--neu-text-dim)]">
+            Restablecer porcentajes
+          </button>
+        )}
+      </div>
+
+      <div className="mt-2">
         {sliderRow('Gastos fijos', 'fijos_pct', '#0f6e56')}
         {sliderRow('Gastos variables', 'variables_pct', '#534ab7')}
         {sliderRow('Ahorro intocable', 'ahorro_intocable_pct', '#1b3a8a')}
